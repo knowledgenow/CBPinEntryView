@@ -178,8 +178,10 @@ public protocol CBPinEntryViewDelegate: class {
 
     @objc private func didPressCodeButton(_ sender: UIButton) {
         errorMode = false
+    
+        let count = textField.text!.count
         
-        let entryIndex = textField.text!.count + 1
+        let entryIndex = count == self.length ? count : count + 1
         for button in entryButtons {
             button.layer.borderColor = entryBorderColour.cgColor
 
@@ -239,6 +241,11 @@ public protocol CBPinEntryViewDelegate: class {
         
         return textField.resignFirstResponder()
     }
+  
+    open func setInputAccessoryView(view: UIView){
+      self.textField.inputAccessoryView = view
+    }
+  
 }
 
 extension CBPinEntryView: UITextFieldDelegate {
@@ -268,7 +275,11 @@ extension CBPinEntryView: UITextFieldDelegate {
         if !deleting {
             for button in entryButtons {
                 if button.tag == newLength {
-                    button.layer.borderColor = entryDefaultBorderColour.cgColor
+                    if(newLength == self.length){
+                      button.layer.borderColor = entryBorderColour.cgColor
+                    }else{
+                      button.layer.borderColor = entryDefaultBorderColour.cgColor
+                    }
                     UIView.setAnimationsEnabled(false)
                     if !isSecure {
                         button.setTitle(string, for: .normal)
@@ -278,7 +289,7 @@ extension CBPinEntryView: UITextFieldDelegate {
                     UIView.setAnimationsEnabled(true)
                 } else if button.tag == newLength + 1 {
                     button.layer.borderColor = entryBorderColour.cgColor
-                } else {
+                }else{
                     button.layer.borderColor = entryDefaultBorderColour.cgColor
                 }
             }
