@@ -221,6 +221,19 @@ public protocol CBPinEntryViewDelegate: class {
     open func getPinAsString() -> String {
         return textField.text!
     }
+  
+    open func setPin(string: String){
+      
+      self.textField.text = ""
+
+      for (index, char) in string.enumerated(){
+        let shouldChange = self.shouldChangeCharacters(textField: self.textField, range: NSRange.init(location: index, length: 0), string: String(char))
+        if(shouldChange){
+          self.textField.text = "\(self.textField.text!)\(String(char))"
+        }
+      }
+      
+    }
     
     @discardableResult open override func becomeFirstResponder() -> Bool {
         super.becomeFirstResponder()
@@ -246,6 +259,63 @@ public protocol CBPinEntryViewDelegate: class {
       self.textField.inputAccessoryView = view
     }
   
+  private func shouldChangeCharacters(textField: UITextField, range: NSRange, string: String) -> Bool{
+    
+    errorMode = false
+    for button in entryButtons {
+      button.layer.borderColor = entryBorderColour.cgColor
+    }
+    
+    let deleting = (range.location == textField.text!.count - 1 && range.length == 1 && string == "")
+    
+    if string.count > 0 && !Scanner(string: string).scanInt(nil) {
+      return false
+    }
+    
+    let oldLength = textField.text!.count
+    let replacementLength = string.count
+    let rangeLength = range.length
+    
+    let newLength = oldLength - rangeLength + replacementLength
+    
+    if !deleting {
+      for button in entryButtons {
+        if button.tag == newLength {
+          if(newLength == self.length){
+            button.layer.borderColor = entryBorderColour.cgColor
+          }else{
+            button.layer.borderColor = entryDefaultBorderColour.cgColor
+          }
+          UIView.setAnimationsEnabled(false)
+          if !isSecure {
+            button.setTitle(string, for: .normal)
+          } else {
+            button.setTitle(secureCharacter, for: .normal)
+          }
+          UIView.setAnimationsEnabled(true)
+        } else if button.tag == newLength + 1 {
+          button.layer.borderColor = entryBorderColour.cgColor
+        }else{
+          button.layer.borderColor = entryDefaultBorderColour.cgColor
+        }
+      }
+    } else {
+      for button in entryButtons {
+        if button.tag == oldLength {
+          button.layer.borderColor = entryBorderColour.cgColor
+          UIView.setAnimationsEnabled(false)
+          button.setTitle("", for: .normal)
+          UIView.setAnimationsEnabled(true)
+        } else {
+          button.layer.borderColor = entryDefaultBorderColour.cgColor
+        }
+      }
+    }
+    
+    return newLength <= length
+    
+  }
+  
 }
 
 extension CBPinEntryView: UITextFieldDelegate {
@@ -255,57 +325,6 @@ extension CBPinEntryView: UITextFieldDelegate {
     }
 
     public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        errorMode = false
-        for button in entryButtons {
-            button.layer.borderColor = entryBorderColour.cgColor
-        }
-
-        let deleting = (range.location == textField.text!.count - 1 && range.length == 1 && string == "")
-
-        if string.count > 0 && !Scanner(string: string).scanInt(nil) {
-            return false
-        }
-
-        let oldLength = textField.text!.count
-        let replacementLength = string.count
-        let rangeLength = range.length
-
-        let newLength = oldLength - rangeLength + replacementLength
-
-        if !deleting {
-            for button in entryButtons {
-                if button.tag == newLength {
-                    if(newLength == self.length){
-                      button.layer.borderColor = entryBorderColour.cgColor
-                    }else{
-                      button.layer.borderColor = entryDefaultBorderColour.cgColor
-                    }
-                    UIView.setAnimationsEnabled(false)
-                    if !isSecure {
-                        button.setTitle(string, for: .normal)
-                    } else {
-                        button.setTitle(secureCharacter, for: .normal)
-                    }
-                    UIView.setAnimationsEnabled(true)
-                } else if button.tag == newLength + 1 {
-                    button.layer.borderColor = entryBorderColour.cgColor
-                }else{
-                    button.layer.borderColor = entryDefaultBorderColour.cgColor
-                }
-            }
-        } else {
-            for button in entryButtons {
-                if button.tag == oldLength {
-                    button.layer.borderColor = entryBorderColour.cgColor
-                    UIView.setAnimationsEnabled(false)
-                    button.setTitle("", for: .normal)
-                    UIView.setAnimationsEnabled(true)
-                } else {
-                    button.layer.borderColor = entryDefaultBorderColour.cgColor
-                }
-            }
-        }
-
-        return newLength <= length
+      return self.shouldChangeCharacters(textField: textField, range: range, string: string)
     }
 }
