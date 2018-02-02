@@ -224,6 +224,10 @@ public protocol CBPinEntryViewDelegate: class {
   
     open func setPin(string: String){
       
+      if(string == ""){
+        return self.removePin()
+      }
+      
       self.textField.text = ""
 
       for (index, char) in string.enumerated(){
@@ -232,6 +236,18 @@ public protocol CBPinEntryViewDelegate: class {
           self.textField.text = "\(self.textField.text!)\(String(char))"
         }
       }
+      
+    }
+  
+    open func removePin(){
+      
+        self.textField.text = ""
+        for button in entryButtons {
+            button.layer.borderColor = entryDefaultBorderColour.cgColor
+            UIView.setAnimationsEnabled(false)
+            button.setTitle("", for: .normal)
+            UIView.setAnimationsEnabled(true)
+        }
       
     }
     
